@@ -1,0 +1,30 @@
+# --- Raw data: NEVER commit (HAI is regenerable; SWaT license forbids redistribution) ---
+data/raw/
+data/bronze/
+data/silver/
+data/gold/
+
+# --- Secrets ---
+*.env
+.env
+*service-account*.json
+*.key
+
+# --- Training artifacts (models ship via Git LFS later, not here) ---
+logs/
+runs/
+*.pt.tmp
+
+# --- Python / uv ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+.python-version
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/

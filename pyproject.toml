@@ -1,0 +1,63 @@
+[project]
+name = "cps-anomaly-pipeline"
+version = "0.1.0"
+description = "DE-first anomaly detection pipeline for cyber-physical systems (HAI / SWaT)"
+readme = "README.md"
+authors = [
+    { name = "pqtrng", email = "72325861+pqtrng@users.noreply.github.com" }
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=2.5.0",
+    "pandas>=2.2,<3",
+    "pandas-stubs>=2.2,<3",
+    "pandera>=0.32.1",
+    "pyarrow>=23.0.1",
+    "pyyaml>=6.0.3",
+]
+
+[project.optional-dependencies]
+cpu = [
+    "torch>=2.12.1",
+]
+cu126 = [
+    "torch>=2.12.1",
+]
+
+[tool.uv]
+conflicts = [
+    [{ extra = "cpu" }, { extra = "cu126" }],
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu126", extra = "cu126" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[project.scripts]
+cps-anomaly-pipeline = "cps_anomaly_pipeline.ingest:main"
+
+[build-system]
+requires = ["uv_build>=0.11.24,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.15.21",
+    "yamllint>=1.38.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
