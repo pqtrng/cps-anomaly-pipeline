@@ -46,6 +46,7 @@ cps-ingest = "cps_anomaly_pipeline.ingest:main"
 cps-silver = "cps_anomaly_pipeline.silver:main"
 cps-gold = "cps_anomaly_pipeline.gold:main"
 cps-pipeline = "cps_anomaly_pipeline.pipeline:main"
+cps-baseline = "cps_anomaly_pipeline.baseline:main"
 
 [build-system]
 requires = ["uv_build>=0.11.24,<0.12.0"]

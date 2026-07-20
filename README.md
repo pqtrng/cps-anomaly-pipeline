@@ -7,27 +7,30 @@ than a single model in a notebook.
 
 ## Status
 
-**T1 complete** — HAI ingestion into the Bronze layer.
+**T2 complete** — Bronze → Silver → Gold with Pandera validation, SHA-1 fingerprinting, and honest train/calib/holdout splits.
 
 | Stage | Description                                               | State |
-|-------|-----------------------------------------------------------|-------|
-| T1    | Ingest HAI `.csv.gz` → Bronze (Parquet, raw-as-ingested)  | ✅    |
-| T2    | Silver / Gold + Pandera validation + SHA-1 fingerprinting | ⬜    |
-| T3    | Baseline detector                                         | ⬜    |
-| T4    | LSTM-Autoencoder + file-based run registry                | ⬜    |
-| T5    | Honest evaluation (per-attack, detection lead time)       | ⬜    |
-| T6    | SLO / SLI framing + serving                               | ⬜    |
-| T7    | Tests + CI                                                | ⬜    |
+| ----- | --------------------------------------------------------- | ----- |
+| T1    | Ingest HAI `.csv.gz` → Bronze (Parquet, raw-as-ingested)  | ✅     |
+| T2    | Silver / Gold + Pandera validation + SHA-1 fingerprinting | ✅     |
+| T3    | Baseline detector                                         | ⬜     |
+| T4    | LSTM-Autoencoder + file-based run registry                | ⬜     |
+| T5    | Honest evaluation (per-attack, detection lead time)       | ⬜     |
+| T6    | SLO / SLI framing + serving                               | ⬜     |
+| T7    | Tests + CI                                                | ⬜     |
 
 ## Prerequisites
 
 - **Python 3.12**
 - **[uv](https://docs.astral.sh/uv/)** — package/venv manager:
+  
   ```bash
   # macOS / Linux / WSL2
   curl -LsSf https://astral.sh/uv/install.sh | sh
   ```
+
 - **make** — used by the shortcuts below (optional; raw `uv` commands shown too):
+  
   ```bash
   # Debian / Ubuntu / WSL2
   sudo apt install make
@@ -64,24 +67,40 @@ export DATA_ROOT=/path/to/data
 ## Run
 
 ```bash
-make ingest     # HAI .csv.gz -> data/bronze/hai/*.parquet
-make test       # run the test suite
+make ingest       # HAI .csv.gz -> data/bronze/hai/*.parquet
+make silver       # Bronze -> Silver (drop constants, validate, fingerprint)
+make gold         # Silver -> Gold (scale, split, manifest) + verify
+make pipeline     # Full run: Silver -> Gold -> verify
+make test         # run the test suite
 ```
 
 Without `make`:
 
 ```bash
-uv run cps-anomaly-pipeline   # ingest
-uv run pytest -v              # test
+uv run cps-ingest     # ingest
+uv run cps-silver     # silver
+uv run cps-gold       # gold
+uv run cps-pipeline   # silver -> gold -> verify
+uv run pytest -v      # test
 ```
 
 ## Layout
 
-```
+```text
 src/cps_anomaly_pipeline/
-  paths.py      PathConfig — all data paths from a single DATA_ROOT
-  device.py     get_device() — cuda / mps / cpu auto-select
-  ingest.py     HAI -> Bronze
+  paths.py         PathConfig — all data paths from a single DATA_ROOT
+  device.py        get_device() — cuda / mps / cpu auto-select
+  ingest.py        HAI -> Bronze
+  schema.py        Silver Pandera schemas + Gold split definitions
+  fingerprint.py   SHA-1 row-level fingerprinting
+  silver.py        Bronze -> Silver
+  gold.py          Silver -> Gold (scaler, splits, manifest)
+  pipeline.py      Silver -> Gold -> verify orchestrator
 tests/
   test_ingest.py
+  test_silver.py
+  test_gold.py
+EDA.md             EDA facts driving the T2 schema
+notebooks/
+  eda_hai.ipynb
 ```

@@ -5,7 +5,7 @@
 TORCH_EXTRA ?= $(shell command -v nvidia-smi >/dev/null 2>&1 && echo cu126 || echo cpu)
 
 .DEFAULT_GOAL := help
-.PHONY: help install ingest silver gold pipeline test lint fix
+.PHONY: help install ingest silver gold pipeline test lint fix baseline
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -25,6 +25,9 @@ gold:  ## Silver -> Gold (scale, split, manifest) + verify
 
 pipeline:  ## Full run: Silver -> Gold -> verify
 	uv run cps-pipeline
+
+baseline:  ## Run the baseline detector
+	uv run cps-baseline
 
 test:  ## Run the test suite
 	uv run pytest -v
