@@ -79,20 +79,33 @@ uv run pytest -v      # test
 ## Layout
 
 ```text
-src/cps_anomaly_pipeline/
-  paths.py         PathConfig — all data paths from a single DATA_ROOT
-  device.py        get_device() — accelerator / CPU auto-select
-  ingest.py        HAI -> Bronze
-  schema.py        Silver Pandera schemas + Gold split definitions
-  fingerprint.py   SHA-1 row-level fingerprinting
-  silver.py        Bronze -> Silver
-  gold.py          Silver -> Gold (scaler, splits, manifest)
-  pipeline.py      Silver -> Gold -> verify orchestrator
-tests/
-  test_ingest.py
-  test_silver.py
-  test_gold.py
-EDA.md             EDA facts driving the T2 schema
+src/cps_anomaly_pipeline/   # installable pipeline package
+├── paths.py            # PathConfig — all data/run paths from DATA_ROOT / RUNS_ROOT
+├── device.py           # get_device() — GPU / CPU auto-select
+├── schema.py           # Silver Pandera schemas + Gold split definitions
+├── fingerprint.py      # SHA-1 row-level fingerprinting
+├── ingest.py           # HAI .csv.gz -> Bronze
+├── silver.py           # Bronze -> Silver
+├── gold.py             # Silver -> Gold (scaler, splits, manifest)
+├── pipeline.py         # Silver -> Gold -> verify orchestrator
+├── baseline.py         # T3: z-score baseline (max|z| + mean z²)
+├── windowing.py        # T4: sliding-window Dataset (60 features)
+├── model_lstm_ae.py    # T4: LSTM-Autoencoder architecture
+└── train.py            # T4: model-agnostic trainer (TensorBoard, val-loss ckpt)
+tests/                      # pytest suite — synthetic data, no real Gold on runners
+├── test_ingest.py
+├── test_silver.py
+├── test_gold.py
+├── test_baseline.py
+├── test_windowing.py
+├── test_model_lstm_ae.py
+└── test_train.py
 notebooks/
-  eda_hai.ipynb
+└── eda_hai.ipynb       # EDA driving the Silver/Gold schema
+.github/workflows/
+└── ci.yml              # lint + full test suite on CPU torch
+EDA.md                  # EDA facts driving the Silver schema
+Makefile                # install / pipeline / baseline / train / test / lint
+pyproject.toml
+uv.lock
 ```
