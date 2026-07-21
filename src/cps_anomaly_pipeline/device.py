@@ -1,4 +1,4 @@
-"""Device selection compatible with CUDA and CPU.
+"""Torch device selection for GPU-enabled and CPU-only environments.
 
 torch is imported lazily so data-only stages do not require torch installed.
 """
@@ -7,11 +7,7 @@ from __future__ import annotations
 
 
 def get_device() -> str:
-    """Return the best available torch device string: cuda > mps > cpu.
-
-    Auto-selection avoids hardcoding a device so the same code runs on the GPU
-    machine and on a laptop.
-    """
+    """Return the best available torch device string (accelerator if present, else CPU)."""
     try:
         import torch
     except ImportError:

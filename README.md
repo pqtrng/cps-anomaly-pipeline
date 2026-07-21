@@ -25,34 +25,24 @@ than a single model in a notebook.
 - **[uv](https://docs.astral.sh/uv/)** — package/venv manager:
   
   ```bash
-  # macOS / Linux / WSL2
   curl -LsSf https://astral.sh/uv/install.sh | sh
   ```
 
-- **make** — used by the shortcuts below (optional; raw `uv` commands shown too):
-  
-  ```bash
-  # Debian / Ubuntu / WSL2
-  sudo apt install make
-  # macOS (via Xcode command line tools)
-  xcode-select --install
-  ```
-
-> On Windows, run everything inside **WSL2** — the Makefile needs a POSIX `make`.
+- **make** — used by the shortcuts below (optional; raw `uv` commands shown too)
 
 ## Install
 
 ```bash
-make install    # detects GPU, installs the matching torch build
+make install    # installs deps + a torch build (see Makefile TORCH_EXTRA)
 ```
 
-`make install` auto-selects CUDA (`cu126`) when an NVIDIA GPU is present, otherwise the CPU/MPS build. Override with
-`make install TORCH_EXTRA=cpu`.
+Override the torch build with `make install TORCH_EXTRA=cpu` or
+`make install TORCH_EXTRA=cu126`.
 
 Without `make`:
 
 ```bash
-uv sync --extra cpu       # or: --extra cu126 on an NVIDIA machine
+uv sync --extra cpu       # or: --extra cu126
 ```
 
 ## Data
@@ -89,7 +79,7 @@ uv run pytest -v      # test
 ```text
 src/cps_anomaly_pipeline/
   paths.py         PathConfig — all data paths from a single DATA_ROOT
-  device.py        get_device() — cuda / mps / cpu auto-select
+  device.py        get_device() — accelerator / CPU auto-select
   ingest.py        HAI -> Bronze
   schema.py        Silver Pandera schemas + Gold split definitions
   fingerprint.py   SHA-1 row-level fingerprinting

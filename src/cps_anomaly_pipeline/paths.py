@@ -15,6 +15,10 @@ def _default_data_root() -> Path:
     return Path(os.environ.get("DATA_ROOT", "data")).expanduser().resolve()
 
 
+def _default_runs_root() -> Path:
+    return Path(os.environ.get("RUNS_ROOT", "runs")).expanduser().resolve()
+
+
 @dataclass
 class PathConfig:
     """Resolves every path the pipeline needs from a single data root.
@@ -24,6 +28,7 @@ class PathConfig:
     """
 
     data_root: Path = field(default_factory=_default_data_root)
+    runs_root: Path = field(default_factory=_default_runs_root)
 
     # raw input
     @property
@@ -59,6 +64,10 @@ class PathConfig:
     @property
     def hai_gold_dir(self) -> Path:
         return self.gold_dir / "hai"
+
+    @property
+    def runs_dir(self) -> Path:
+        return self.runs_root
 
     def ensure_dirs(self) -> None:
         self.hai_bronze_dir.mkdir(parents=True, exist_ok=True)

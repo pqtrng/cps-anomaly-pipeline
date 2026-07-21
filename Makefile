@@ -1,18 +1,17 @@
-# Pick the right PyTorch build for THIS machine automatically:
-#   - NVIDIA GPU present (nvidia-smi on PATH) -> CUDA wheels  (cu126)
-#   - otherwise (e.g. macOS / no GPU)         -> CPU wheels   (cpu)
-# Override anytime, e.g.:  make test TORCH_EXTRA=cpu
+# Pick torch wheels: cu126 on a GPU-enabled environment, else cpu.
+# Override anytime, e.g.:  make install TORCH_EXTRA=cpu
 TORCH_EXTRA ?= $(shell command -v nvidia-smi >/dev/null 2>&1 && echo cu126 || echo cpu)
+MODEL ?= lstm_ae
 
 .DEFAULT_GOAL := help
-.PHONY: help install ingest silver gold pipeline test lint fix baseline
+.PHONY: help install ingest silver gold pipeline baseline train save-metrics test lint fix
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-install:  ## Install deps + matching torch (auto-detects GPU)
-	uv sync --extra $(TORCH_EXTRA)
+install:  ## Install deps + matching torch (auto-detects GPU) + train tooling
+	uv sync --extra $(TORCH_EXTRA) --extra train
 
 ingest:  ## Ingest HAI .csv.gz -> Bronze Parquet
 	uv run cps-ingest
@@ -26,8 +25,16 @@ gold:  ## Silver -> Gold (scale, split, manifest) + verify
 pipeline:  ## Full run: Silver -> Gold -> verify
 	uv run cps-pipeline
 
-baseline:  ## Run the baseline detector
+baseline:  ## T3 z-score baseline detector (both scoring methods) on Gold
 	uv run cps-baseline
+
+train:  ## T4 train LSTM-AE (TensorBoard + val_loss checkpoint)
+	uv run cps-train
+
+save-metrics:  ## Copy run metrics.json into Git-tracked results/ (MODEL=lstm_ae)
+	@mkdir -p results
+	@cp runs/$(MODEL)/metrics.json results/$(MODEL)_metrics.json
+	@echo "Saved results/$(MODEL)_metrics.json — commit this to version the numbers."
 
 test:  ## Run the test suite
 	uv run pytest -v

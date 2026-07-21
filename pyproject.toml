@@ -21,6 +21,7 @@ dependencies = [
 [project.optional-dependencies]
 cpu = ["torch>=2.12.1"]
 cu126 = ["torch>=2.12.1"]
+train = ["tensorboard>=2.18"]
 
 [tool.uv]
 conflicts = [[{ extra = "cpu" }, { extra = "cu126" }]]
@@ -47,6 +48,7 @@ cps-silver = "cps_anomaly_pipeline.silver:main"
 cps-gold = "cps_anomaly_pipeline.gold:main"
 cps-pipeline = "cps_anomaly_pipeline.pipeline:main"
 cps-baseline = "cps_anomaly_pipeline.baseline:main"
+cps-train = "cps_anomaly_pipeline.train:main"
 
 [build-system]
 requires = ["uv_build>=0.11.24,<0.12.0"]
