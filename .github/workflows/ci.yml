@@ -1,0 +1,43 @@
+---
+name: CI
+
+on:
+    push:
+        branches: [master]
+    pull_request:
+        branches: [master]
+
+# NOTE: CI deliberately does NOT run the data pipeline or its Pandera gates.
+# Those validate real data on disk (Gold layer); runners hold no data. Data
+# gates belong to machines that have the data, not to CI.
+
+jobs:
+    lint-and-test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+
+            - name: Install Python 3.12
+              run: uv python install 3.12
+
+            - name: Install dependencies (CPU torch + train tooling -- runners have no GPU)
+              run: uv sync --extra cpu --extra train
+
+            - name: Lint
+              run: make lint
+              env:
+                  # `uv run` inside make must NOT re-sync the env to default extras,
+                  # which would swap the CPU torch build back out.
+                  UV_NO_SYNC: "1"
+
+            - name: Test
+              run: make test
+              env:
+                  UV_NO_SYNC: "1"

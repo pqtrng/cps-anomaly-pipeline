@@ -1,3 +1,5 @@
+[![CI](https://github.com/pqtrng/cps-anomaly-pipeline/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/pqtrng/cps-anomaly-pipeline/actions/workflows/ci.yml)
+
 # cps-anomaly-pipeline
 
 A DE-first anomaly detection pipeline for cyber-physical systems, built on the
@@ -7,17 +9,17 @@ than a single model in a notebook.
 
 ## Status
 
-**T2 complete** — Bronze → Silver → Gold with Pandera validation, SHA-1 fingerprinting, and honest train/calib/holdout splits.
+**T4 complete** — LSTM-Autoencoder trained on normal-only windows, with a z-score baseline for comparison, TensorBoard tracking, and val-loss checkpoint selection.
 
 | Stage | Description                                               | State |
 | ----- | --------------------------------------------------------- | ----- |
 | T1    | Ingest HAI `.csv.gz` → Bronze (Parquet, raw-as-ingested)  | ✅     |
 | T2    | Silver / Gold + Pandera validation + SHA-1 fingerprinting | ✅     |
-| T3    | Baseline detector                                         | ⬜     |
-| T4    | LSTM-Autoencoder + file-based run registry                | ⬜     |
+| T3    | Baseline detector (z-score, both scoring methods)         | ✅     |
+| T4    | LSTM-Autoencoder (windowing, TensorBoard, val-loss ckpt)  | ✅     |
 | T5    | Honest evaluation (per-attack, detection lead time)       | ⬜     |
 | T6    | SLO / SLI framing + serving                               | ⬜     |
-| T7    | Tests + CI                                                | ⬜     |
+| T7    | Tests + CI                                                | ✅     |
 
 ## Prerequisites
 
