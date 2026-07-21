@@ -48,6 +48,6 @@ fix:  ## Alias for lint (auto-fixes what ruff can)
 
 ci-status:  ## Show recent GitHub Actions CI runs (needs gh CLI, authenticated)
 	gh run list --workflow ci.yml --limit 5
- 
+
 ci-watch:  ## Watch the latest CI run live until it finishes (needs gh CLI)
 	gh run watch $$(gh run list --workflow ci.yml --limit 1 --json databaseId --jq '.[0].databaseId')

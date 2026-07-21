@@ -27,8 +27,8 @@ jobs:
             - name: Install Python 3.12
               run: uv python install 3.12
 
-            - name: Install dependencies (CPU torch + train tooling -- runners have no GPU)
-              run: uv sync --extra cpu --extra train
+            - name: Install dependencies (CPU torch + train tooling + dev tools -- runners have no GPU)
+              run: uv sync --extra cpu --extra train --group dev
 
             - name: Lint
               run: make lint
