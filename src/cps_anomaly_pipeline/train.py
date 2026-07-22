@@ -53,7 +53,10 @@ class TrainConfig:
     #                       every stride-1 window (stride-1 makes val dominate the
     #                       epoch and waste GPU time for no accuracy gain).
     batch_size: int = 256
-    epochs: int = 30
+    epochs: int = (
+        100  # ceiling; early stopping (patience) usually cuts well before this
+    )
+    patience: int = 8  # stop if val_loss doesn't improve for this many epochs
     lr: float = 1e-3
     val_fraction: float = 0.1  # tail of train split held out as normal-only val
     seed: int = 42
@@ -133,6 +136,8 @@ def train_model(
     writer = SummaryWriter(log_dir=str(run_dir / "tb"))
     best_val = float("inf")
     best_epoch = -1
+    epochs_since_improve = 0
+    stopped_early = False
     history: list[dict] = []
     ckpt_path = run_dir / "best.pt"
 
@@ -141,7 +146,9 @@ def train_model(
         f"train_windows={len(train_ds):,} val_windows={len(val_ds):,}"
     )
     start = time.time()
+    last_epoch = -1
     for epoch in range(config.epochs):
+        last_epoch = epoch
         train_loss = _run_epoch(model, train_loader, criterion, device, optimizer)
         val_loss = _run_epoch(model, val_loader, criterion, device, None)
         writer.add_scalar("loss/train", train_loss, epoch)
@@ -152,9 +159,23 @@ def train_model(
         if val_loss < best_val:
             best_val = val_loss
             best_epoch = epoch
+            epochs_since_improve = 0
             torch.save(model.state_dict(), ckpt_path)
             marker = "  <- best (checkpointed)"
+        else:
+            epochs_since_improve += 1
         print(f"  epoch {epoch:3d}  train={train_loss:.6f}  val={val_loss:.6f}{marker}")
+
+        # Early stopping: stop once val_loss has not improved for `patience`
+        # epochs. The best checkpoint is already saved, so nothing is lost — this
+        # only avoids burning epochs after the model has stopped learning.
+        if epochs_since_improve >= config.patience:
+            stopped_early = True
+            print(
+                f"  early stop: no val improvement for {config.patience} epochs "
+                f"(best @ epoch {best_epoch})"
+            )
+            break
 
     writer.close()
     elapsed = time.time() - start
@@ -164,6 +185,8 @@ def train_model(
         "device": device,
         "best_epoch": best_epoch,
         "best_val_loss": best_val,
+        "stopped_early": stopped_early,
+        "last_epoch": last_epoch,
         "elapsed_sec": round(elapsed, 1),
         "history": history,
     }

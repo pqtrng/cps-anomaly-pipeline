@@ -110,3 +110,38 @@ def test_metrics_json_roundtrips(tmp_path):
     loaded = json.loads((tmp_path / "metrics.json").read_text())
     assert loaded["config"]["model_name"] == "tiny"
     assert "history" in loaded and len(loaded["history"]) == 2
+
+
+class _IdentityAE(nn.Module):
+    """Returns the input unchanged -> reconstruction loss is ~0 from epoch 0 and
+    cannot improve further, so early stopping fires after `patience` epochs.
+    A grad-requiring dummy param keeps backward() valid (its grad is 0)."""
+
+    def __init__(self, n_features: int = N_FEATURES) -> None:
+        super().__init__()
+        self._dummy = nn.Parameter(torch.zeros(1))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # identity plus 0*dummy so the loss has a (zero-gradient) path to a param
+        return x + self._dummy * 0.0
+
+
+def test_early_stopping_triggers(tmp_path):
+    """With an identity model, val_loss is minimal at epoch 0 and never improves,
+    so training stops after `patience` epochs instead of running all `epochs`."""
+    df = _make_gold(200)
+    train_df, val_df = _split_train_val(df, 0.2)
+    scaler = IntScaler.fit(train_df)
+    train_ds = WindowDataset(train_df, scaler, window=20, stride=5)
+    val_ds = WindowDataset(val_df, scaler, window=20, stride=5)
+
+    config = TrainConfig(
+        model_name="identity", window=20, stride=5, epochs=50, patience=3, batch_size=16
+    )
+    metrics = train_model(
+        _IdentityAE(), train_ds, val_ds, config, tmp_path, device="cpu"
+    )
+
+    assert metrics["stopped_early"] is True
+    assert metrics["last_epoch"] < 49
+    assert len(metrics["history"]) == metrics["last_epoch"] + 1
