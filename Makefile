@@ -4,7 +4,7 @@ TORCH_EXTRA ?= $(shell command -v nvidia-smi >/dev/null 2>&1 && echo cu126 || ec
 MODEL ?= lstm_ae
 
 .DEFAULT_GOAL := help
-.PHONY: help install ingest silver gold pipeline baseline train save-metrics tensorboard test lint fix ci-status ci-watch
+.PHONY: help install ingest silver gold pipeline baseline train eval save-metrics tensorboard test lint fix ci-status ci-watch
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -30,6 +30,9 @@ baseline:  ## T3 z-score baseline detector (both scoring methods) on Gold
 
 train:  ## T4 train LSTM-AE (TensorBoard + val_loss checkpoint)
 	uv run cps-train
+
+eval:  ## Eval LSTM-AE on Gold (per-process recall, AUC, ...)
+	uv run cps-eval
 
 save-metrics:  ## Copy latest run's metrics.json into Git-tracked results/ (MODEL=lstm_ae)
 	@mkdir -p results

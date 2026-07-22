@@ -17,7 +17,7 @@ than a single model in a notebook.
 | T2    | Silver / Gold + Pandera validation + SHA-1 fingerprinting | ✅     |
 | T3    | Baseline detector (z-score, both scoring methods)         | ✅     |
 | T4    | LSTM-Autoencoder (windowing, TensorBoard, val-loss ckpt)  | ✅     |
-| T5    | Honest evaluation (per-attack, detection lead time)       | ⬜     |
+| T5    | Honest evaluation (per-attack, detection lead time)       | ✅     |
 | T6    | SLO / SLI framing + serving                               | ⬜     |
 | T7    | Tests + CI                                                | ✅     |
 
@@ -64,6 +64,7 @@ make silver       # Bronze -> Silver (drop constants, validate, fingerprint)
 make gold         # Silver -> Gold (scale, split, manifest) + verify
 make pipeline     # Full run: Silver -> Gold -> verify
 make test         # run the test suite
+make eval         # T5: evaluate both detectors -> results/eval_metrics.json
 ```
 
 Without `make`:

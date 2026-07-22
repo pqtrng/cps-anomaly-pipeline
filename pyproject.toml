@@ -49,6 +49,7 @@ cps-gold = "cps_anomaly_pipeline.gold:main"
 cps-pipeline = "cps_anomaly_pipeline.pipeline:main"
 cps-baseline = "cps_anomaly_pipeline.baseline:main"
 cps-train = "cps_anomaly_pipeline.train:main"
+cps-eval = "cps_anomaly_pipeline.eval_report:main"
 
 [build-system]
 requires = ["uv_build>=0.11.24,<0.12.0"]
