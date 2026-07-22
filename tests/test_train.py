@@ -15,8 +15,6 @@ import json
 import numpy as np
 import pandas as pd
 import torch
-from torch import nn
-
 from cps_anomaly_pipeline.schema import FLOAT_SENSOR_COLUMNS, INT_SENSOR_COLUMNS
 from cps_anomaly_pipeline.train import (
     TrainConfig,
@@ -24,6 +22,7 @@ from cps_anomaly_pipeline.train import (
     train_model,
 )
 from cps_anomaly_pipeline.windowing import N_FEATURES, IntScaler, WindowDataset
+from torch import nn
 
 
 class _TinyAE(nn.Module):
@@ -138,9 +137,7 @@ def test_early_stopping_triggers(tmp_path):
     config = TrainConfig(
         model_name="identity", window=20, stride=5, epochs=50, patience=3, batch_size=16
     )
-    metrics = train_model(
-        _IdentityAE(), train_ds, val_ds, config, tmp_path, device="cpu"
-    )
+    metrics = train_model(_IdentityAE(), train_ds, val_ds, config, tmp_path, device="cpu")
 
     assert metrics["stopped_early"] is True
     assert metrics["last_epoch"] < 49

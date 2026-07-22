@@ -4,7 +4,7 @@ TORCH_EXTRA ?= $(shell command -v nvidia-smi >/dev/null 2>&1 && echo cu126 || ec
 MODEL ?= lstm_ae
 
 .DEFAULT_GOAL := help
-.PHONY: help install ingest silver gold pipeline baseline train save-metrics test lint fix
+.PHONY: help install ingest silver gold pipeline baseline train save-metrics tensorboard test lint fix ci-status ci-watch
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -31,10 +31,14 @@ baseline:  ## T3 z-score baseline detector (both scoring methods) on Gold
 train:  ## T4 train LSTM-AE (TensorBoard + val_loss checkpoint)
 	uv run cps-train
 
-save-metrics:  ## Copy run metrics.json into Git-tracked results/ (MODEL=lstm_ae)
+save-metrics:  ## Copy latest run's metrics.json into Git-tracked results/ (MODEL=lstm_ae)
 	@mkdir -p results
-	@cp runs/$(MODEL)/metrics.json results/$(MODEL)_metrics.json
-	@echo "Saved results/$(MODEL)_metrics.json — commit this to version the numbers."
+	@latest=$$(ls -d runs/$(MODEL)/*/ | sort | tail -1); \
+		cp "$$latest/metrics.json" results/$(MODEL)_metrics.json; \
+		echo "Saved results/$(MODEL)_metrics.json from $$latest — commit to version the numbers."
+
+tensorboard:  ## Launch TensorBoard on all runs (http://localhost:6006)
+	uv run tensorboard --logdir runs
 
 test:  ## Run the test suite
 	uv run pytest -v

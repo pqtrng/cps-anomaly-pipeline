@@ -22,15 +22,12 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
-from torch import nn
-from torch.utils.data import DataLoader, Dataset
-from torch.utils.tensorboard import SummaryWriter
-
 from cps_anomaly_pipeline.device import get_device
 from cps_anomaly_pipeline.paths import PathConfig
 from cps_anomaly_pipeline.windowing import (
@@ -39,6 +36,9 @@ from cps_anomaly_pipeline.windowing import (
     IntScaler,
     WindowDataset,
 )
+from torch import nn
+from torch.utils.data import DataLoader, Dataset
+from torch.utils.tensorboard import SummaryWriter
 
 
 @dataclass
@@ -53,17 +53,15 @@ class TrainConfig:
     #                       every stride-1 window (stride-1 makes val dominate the
     #                       epoch and waste GPU time for no accuracy gain).
     batch_size: int = 256
-    epochs: int = (
-        100  # ceiling; early stopping (patience) usually cuts well before this
-    )
-    patience: int = 8  # stop if val_loss doesn't improve for this many epochs
+    epochs: int = 300  # ceiling; early stopping (patience) usually cuts well before this
+    patience: int = 15  # stop if val_loss doesn't improve for this many epochs
     lr: float = 1e-3
     val_fraction: float = 0.1  # tail of train split held out as normal-only val
     seed: int = 42
 
 
 def _split_train_val(
-    train_df: pd.DataFrame, val_fraction: float
+        train_df: pd.DataFrame, val_fraction: float
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Chronological split: earliest rows train, final tail is validation.
 
@@ -78,11 +76,11 @@ def _split_train_val(
 
 
 def _run_epoch(
-    model: nn.Module,
-    loader: DataLoader,
-    criterion: nn.Module,
-    device: str,
-    optimizer: torch.optim.Optimizer | None,
+        model: nn.Module,
+        loader: DataLoader,
+        criterion: nn.Module,
+        device: str,
+        optimizer: torch.optim.Optimizer | None,
 ) -> float:
     """One pass over loader. If optimizer is given -> train, else -> eval.
 
@@ -107,12 +105,12 @@ def _run_epoch(
 
 
 def train_model(
-    model: nn.Module,
-    train_ds: Dataset,
-    val_ds: Dataset,
-    config: TrainConfig,
-    run_dir: Path,
-    device: str | None = None,
+        model: nn.Module,
+        train_ds: Dataset,
+        val_ds: Dataset,
+        config: TrainConfig,
+        run_dir: Path,
+        device: str | None = None,
 ) -> dict:
     """Train, checkpoint the lowest-val-loss weights, log to TensorBoard.
 
@@ -129,6 +127,10 @@ def train_model(
     model = model.to(device)
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+    # A fixed learning rate is used deliberately: on this data the val loss creeps
+    # down steadily rather than plateauing, and a ReduceLROnPlateau scheduler was
+    # measured to converge to a WORSE minimum (it cut the LR on the slow-but-real
+    # descent, starving progress). Fixed LR reached a lower val loss here.
 
     train_loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=config.batch_size, shuffle=False)
@@ -153,6 +155,8 @@ def train_model(
         val_loss = _run_epoch(model, val_loader, criterion, device, None)
         writer.add_scalar("loss/train", train_loss, epoch)
         writer.add_scalar("loss/val", val_loss, epoch)
+        # Log the current LR (fixed here, but logged so any future scheduler shows).
+        writer.add_scalar("lr", optimizer.param_groups[0]["lr"], epoch)
         history.append({"epoch": epoch, "train_loss": train_loss, "val_loss": val_loss})
 
         marker = ""
@@ -187,6 +191,8 @@ def train_model(
         "best_val_loss": best_val,
         "stopped_early": stopped_early,
         "last_epoch": last_epoch,
+        "initial_lr": config.lr,
+        "final_lr": optimizer.param_groups[0]["lr"],
         "elapsed_sec": round(elapsed, 1),
         "history": history,
     }
@@ -199,7 +205,7 @@ def train_model(
 
 
 def build_datasets(
-    paths: PathConfig, config: TrainConfig
+        paths: PathConfig, config: TrainConfig
 ) -> tuple[WindowDataset, WindowDataset, IntScaler]:
     """Load Gold train, fit int scaler on TRAIN, build train/val window datasets.
 
@@ -235,7 +241,12 @@ def main() -> None:
     train_ds, val_ds, int_scaler = build_datasets(paths, config)
     model = _build_model(config.model_name)
 
-    run_dir = paths.runs_dir / config.model_name
+    # Unique per-run directory: runs/<model>/<model>-<YYYYMMDD-HHMMSS>. Runs never
+    # overwrite each other, and `tensorboard --logdir runs/` shows them all side by
+    # side for comparison (essential for the LSTM-AE vs Dense-AE ablation).
+    run_id = f"{config.model_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    run_dir = paths.runs_dir / config.model_name / run_id
+    print(f"Run id: {run_id}")
     metrics = train_model(model, train_ds, val_ds, config, run_dir, device)
 
     # Persist the int scaler next to the checkpoint for reuse in T5 scoring.
