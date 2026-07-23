@@ -31,7 +31,7 @@ baseline:  ## T3 z-score baseline detector (both scoring methods) on Gold
 train:  ## T4 train LSTM-AE (TensorBoard + val_loss checkpoint)
 	uv run cps-train
 
-eval:  ## Eval LSTM-AE on Gold (per-process recall, AUC, ...)
+eval:  ## T5 eval: all 3 detectors on holdout (per-attack P/R/F1, latency SLI/SLO)
 	uv run cps-eval
 
 save-metrics:  ## Copy latest run's metrics.json into Git-tracked results/ (MODEL=lstm_ae)
