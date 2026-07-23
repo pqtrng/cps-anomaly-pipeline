@@ -225,7 +225,7 @@ def run_eval(
 
     results = {
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "run_dir": str(run_dir),
+        "run_dir": f"{run_dir.parent.name}/{run_dir.name}",
         "eval_device": eval_device,
         "window": window,
         "stride": EVAL_STRIDE,

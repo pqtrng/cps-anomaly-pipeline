@@ -1,6 +1,6 @@
 {
   "created_at": "2026-07-22T15:54:24.497620+00:00",
-  "run_dir": "/Users/pqtrng/Downloads/personal/cps-anomaly-pipeline/runs/lstm_ae/lstm_ae-20260722-105138",
+  "run_dir": "runs/lstm_ae/lstm_ae-20260722-105138",
   "eval_device": "cpu",
   "window": 60,
   "stride": 1,
