@@ -23,18 +23,17 @@ of the full Bronze → Silver → Gold → detector → evaluation pipeline.
 | T6    | SLO / SLI framing + production docs (IEC 62443)           | ✅     |
 | T7    | Tests + CI                                                | ✅     |
 
-## Where this sits — the OT monitoring gap
+## Where this sits — the process-control layer
 
-Cybersecurity for semiconductor-fab **equipment** is specified by **SEMI E187**, which scopes the
-equipment computing environment (endpoint OS hardening, network configuration, update management). E187
-deliberately leaves the **PLC / SCADA process-control layer beneath the equipment out of scope.**
+**SEMI E187** covers the computing devices of fab equipment. This pipeline sits at a
+different layer: the **process-control layer**, where PLCs drive physical processes. The
+HAI testbed is exactly that — boiler, turbine, and water-treatment processes under PLC
+control. So this project does **not** "map to SEMI E187."
 
-The HAI testbed operates at exactly that excluded layer — boiler, turbine, and water-treatment processes
-driven by PLCs. So this pipeline does **not** "map to SEMI E187." It addresses the **OT process-control
-monitoring gap that E187 leaves out of scope.** The applicable framework for that layer is
-**IEC 62443** (security for industrial automation and control systems), under which continuous monitoring
-and anomaly detection are recognised operational controls. This project is a monitoring building block
-for that layer — not a claim of fab-equipment compliance.
+It is framed under **IEC 62443** (security for industrial automation and control
+systems), under which continuous monitoring and anomaly detection are recognised
+operational controls. This project is a monitoring building block for that layer — not a
+claim of fab-equipment compliance.
 
 ## Pipeline architecture
 
